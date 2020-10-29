@@ -26,8 +26,6 @@ sh scripts/docker_build.sh up --build
 ### Step 3
 Open your web browser and view the application using the following urls
 ```
-FRONTEND: localhost:3000
-
 API Docs:  localhost:8001
 ```
 ### Extras
@@ -49,8 +47,6 @@ sh scripts/docker_build.sh build --no-cache
 ```shell script
 sh scripts/docker_build.sh run -d
 ```
-
-
 
 
 
