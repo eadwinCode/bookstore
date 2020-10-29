@@ -1,0 +1,69 @@
+version: '3'
+
+services:
+  # Base image for others to build off of.
+  # Base image for others to build off of.
+  base:
+    build:
+      context: .
+      dockerfile: '${PWD}/docker/base.Dockerfile'
+    image: base:latest
+
+  bookstore-api:
+    container_name: bookstore_api
+    build:
+      context: .
+      dockerfile: '${PWD}/docker/dev.Dockerfile'
+    env_file:
+      - ./bookstore-prod.env
+    command: /var/app/run_local.sh
+    ports:
+      - '8001:8001'
+    image: bookstore_api:latest
+    depends_on:
+      - base
+      - redis
+      - bookstore-db
+
+  bookstore-db:
+    container_name: bookstore_db
+    image: postgres
+    restart: always
+    ports:
+      - '5020:5432'
+    environment:
+      - POSTGRES_PASSWORD=bookstore_password
+      - POSTGRES_USER=bookstore
+      - POSTGRES_DB=bookstore
+    volumes:
+      - bookstore-postgres-db:/var/lib/postgresql/data
+
+  redis:
+    image: redis
+    restart: on-failure
+
+  celery:
+    image: bookstore_api:latest
+    command: >
+      sh -c "cd bookstore && celery -A bookstore worker -B -D &&
+             celery worker -l info -A bookstore"
+    env_file: ./bookstore-prod.env
+    depends_on:
+      - bookstore-api
+    volumes:
+      - .:/var/app/bookstore
+    restart: always
+
+  nginx:
+    build: ./nginx
+    ports:
+      - 8001:80
+    depends_on:
+      - bookstore-api
+    volumes:
+      - static_volume:/var/app/bookstore/staticfiles
+
+volumes:
+  static_volume:
+  bookstore-postgres-db:
+
